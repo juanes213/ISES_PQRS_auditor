@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Auditoría PQRS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .section-title {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .info-item {
+            margin-bottom: 10px;
+        }
+        .label {
+            font-weight: bold;
+            color: #34495e;
+        }
+        .value {
+            color: #2c3e50;
+        }
+        .procedente {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .no-procedente {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .back-btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .back-btn:hover {
+            background-color: #2980b9;
+        }
+        .sentiment {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .sentiment-pos {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .sentiment-neg {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .sentiment-neu {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reporte de Auditoría PQRS</h1>
+        
+        <div class="section">
+            <h2 class="section-title">Datos Personales</h2>
+            <div class="info-item">
+                <span class="label">Nombre:</span>
+                <span class="value">{{ result.datos_personales.nombre or 'No identificado' }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Identificación:</span>
+                <span class="value">{{ result.datos_personales.identificacion or 'No identificada' }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Correo Electrónico:</span>
+                <span class="value">{{ result.datos_personales.email or 'No identificado' }}</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Tipo de Requerimiento</h2>
+            <div class="info-item">
+                <span class="value">{{ result.tipo_requerimiento|title }}</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Resumen</h2>
+            <div class="info-item">
+                <span class="value">{{ result.resumen }}</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Análisis</h2>
+            <div class="info-item">
+                <span class="label">Procedencia:</span>
+                <span class="value {% if result.analisis.procedente %}procedente{% else %}no-procedente{% endif %}">
+                    {{ 'Procedente' if result.analisis.procedente else 'No Procedente' }}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="label">Sentimiento:</span>
+                <span class="sentiment sentiment-{{ result.analisis.sentiment|lower }}">
+                    {{ result.analisis.sentiment }}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="label">Confianza:</span>
+                <span class="value">{{ "%.2f"|format(result.analisis.confidence * 100) }}%</span>
+            </div>
+        </div>
+
+        <a href="/" class="back-btn">Procesar Otro Documento</a>
+    </div>
+</body>
+</html> 

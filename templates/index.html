@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditor PQRS - Sistema de Análisis Automático</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #0056b3;
+            background: #e3f2fd;
+        }
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .result-card {
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            font-size: 0.9em;
+        }
+        .loading {
+            display: none;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 bg-dark text-white p-4">
+                <h4><i class="fas fa-clipboard-check"></i> Auditor PQRS</h4>
+                <hr>
+                <div class="mb-3">
+                    <h6>Criterios de Auditoría:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-user"></i> Datos personales</li>
+                        <li><i class="fas fa-file-alt"></i> Tipo de requerimiento</li>
+                        <li><i class="fas fa-edit"></i> Redacción</li>
+                        <li><i class="fas fa-search"></i> Análisis profundo</li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <h6>Tipos de PQRS:</h6>
+                    <ul class="list-unstyled small">
+                        <li><span class="badge bg-primary">Petición</span></li>
+                        <li><span class="badge bg-warning">Queja</span></li>
+                        <li><span class="badge bg-danger">Reclamo</span></li>
+                        <li><span class="badge bg-success">Sugerencia</span></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 p-4">
+                <div class="row">
+                    <div class="col-12">
+                        <h2>Sistema de Auditoría Automática PQRS</h2>
+                        <p class="text-muted">Sube un documento PDF para realizar la auditoría automática</p>
+                        
+                        <!-- Upload Area -->
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                            <h5>Arrastra y suelta tu archivo PDF aquí</h5>
+                            <p class="text-muted">o haz clic para seleccionar</p>
+                            <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-folder-open"></i> Seleccionar Archivo
+                            </button>
+                        </div>
+                        
+                        <!-- Loading -->
+                        <div class="loading text-center mt-4" id="loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Analizando...</span>
+                            </div>
+                            <p class="mt-2">Analizando documento con IA...</p>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%" id="progressBar"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Results -->
+                        <div id="results"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const progressBar = document.getElementById('progressBar');
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.includes('pdf')) {
+                alert('Por favor selecciona un archivo PDF');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show loading
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 200);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    displayResults(data);
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                loading.style.display = 'none';
+                alert('Error al procesar el archivo: ' + error.message);
+            });
+        }
+
+        function displayResults(data) {
+            const procedente = data.analisis_profundo?.procedente;
+            const calidad = data.calidad_documento?.puntuacion || 0;
+            
+            results.innerHTML = `
+                <div class="result-card card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-file-alt"></i> Resultado de la Auditoría</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-user"></i> Datos Personales</h6>
+                                <ul class="list-unstyled">
+                                    <li><strong>Nombre:</strong> ${data.datos_personales?.nombre_completo || 'No identificado'}</li>
+                                    <li><strong>Cédula:</strong> ${data.datos_personales?.cedula || 'No identificada'}</li>
+                                    <li><strong>Correo:</strong> ${data.datos_personales?.correo || 'No identificado'}</li>
+                                    <li><strong>Teléfono:</strong> ${data.datos_personales?.telefono || 'No identificado'}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-clipboard"></i> Información del Requerimiento</h6>
+                                <p><strong>Tipo:</strong> <span class="badge bg-info">${data.tipo_requerimiento || 'No identificado'}</span></p>
+                                <p><strong>Procedente:</strong> 
+                                    <span class="badge ${procedente ? 'bg-success' : 'bg-danger'}">
+                                        ${procedente ? 'SÍ' : 'NO'}
+                                    </span>
+                                </p>
+                                <p><strong>Calidad:</strong> 
+                                    <span class="badge ${calidad >= 70 ? 'bg-success' : calidad >= 40 ? 'bg-warning' : 'bg-danger'}">
+                                        ${calidad}/100
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h6><i class="fas fa-file-text"></i> Resumen de la Petición</h6>
+                                <p class="text-muted">${data.resumen_peticion || 'No disponible'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h6><i class="fas fa-search"></i> Análisis Profundo</h6>
+                                <p><strong>Justificación:</strong> ${data.analisis_profundo?.justificacion || 'No disponible'}</p>
+                                <p><strong>Recomendación:</strong> ${data.analisis_profundo?.recomendacion || 'No disponible'}</p>
+                            </div>
+                        </div>
+                        
+                        ${data.errores_encontrados && data.errores_encontrados.length > 0 ? `
+                        <div class="row">
+                            <div class="col-12">
+                                <h6><i class="fas fa-exclamation-triangle text-warning"></i> Errores Encontrados</h6>
+                                <ul class="list-group list-group-flush">
+                                    ${data.errores_encontrados.map(error => `<li class="list-group-item text-danger">${error}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <hr>
+                        
+                        <div class="text-center">
+                            <button class="btn btn-success" onclick="generateReport()">
+                                <i class="fas fa-download"></i> Descargar Reporte Completo
+                            </button>
+                            <button class="btn btn-secondary" onclick="location.reload()">
+                                <i class="fas fa-redo"></i> Analizar Otro Documento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Store data for report generation
+            window.currentAnalysis = data;
+        }
+
+        function generateReport() {
+            if (!window.currentAnalysis) {
+                alert('No hay datos para generar el reporte');
+                return;
+            }
+
+            fetch('/generate_report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(window.currentAnalysis)
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'reporte_auditoria_pqrs.html';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                alert('Error al generar el reporte: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>
